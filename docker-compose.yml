@@ -1,0 +1,207 @@
+services:
+  # New UI Services
+  new-ui-server:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/apache.dockerfile
+    ports: 
+      - '8001:80'
+    networks:
+      app-network:
+        aliases:
+          - new-ui.local
+    volumes: 
+      - ./site-manager-site-manager-new-ui:/var/www/html
+      - ./site-manager-site-manager-new-ui/.env.local:/var/www/html/.env
+      - ./docker-services/apache/site-manager-site-manager-new-ui.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+    depends_on: 
+      - new-ui-app
+      - new-ui-redis
+
+  new-ui-app:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-new-ui:/var/www/html:delegated
+      - ./site-manager-new-ui/.env.local:/var/www/html/.env
+
+  new-ui-redis:
+    image: redis:alpine
+    networks:
+      - app-network
+    ports:
+      - "6379:6379"
+
+  new-ui-composer:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/composer.dockerfile
+    networks:
+      - app-network
+    volumes:
+      - ./site-manager-new-ui:/var/www/html
+
+  new-ui-npm:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/npm.dockerfile
+    ports:
+      - '5173:5173'
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-new-ui:/var/www/html
+    tty: true
+    stdin_open: true
+
+  new-ui-artisan:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-new-ui:/var/www/html
+      - ./site-manager-new-ui/.env.local:/var/www/html/.env
+    entrypoint: ["php", "/var/www/html/artisan"]
+
+  # Legacy Services
+  legacy-server:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/apache.dockerfile
+    ports: 
+      - '8002:80'
+    networks:
+      app-network:
+        aliases:
+          - legacy.local
+    volumes: 
+      - ./site-manager-legacy:/var/www/html
+      - ./site-manager-legacy/.env.local:/var/www/html/.env
+      - ./docker-services/apache/site-manager-legacy.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+    depends_on: 
+      - legacy-app
+
+  legacy-app:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-legacy:/var/www/html:delegated
+      - ./site-manager-legacy/.env.local:/var/www/html/.env
+
+  legacy-composer:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/composer.dockerfile
+    networks:
+      - app-network
+    volumes:
+      - ./site-manager-legacy:/var/www/html
+
+  legacy-npm:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/npm.dockerfile
+    ports:
+      - '5174:5173'
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-legacy:/var/www/html
+    tty: true
+    stdin_open: true
+
+  legacy-artisan:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-legacy:/var/www/html
+      - ./site-manager-legacy/.env.local:/var/www/html/.env
+    entrypoint: ["php", "/var/www/html/artisan"]
+
+  # API Services
+  api-server:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/apache.dockerfile
+    ports: 
+      - '8000:80'
+    networks:
+      app-network:
+        aliases:
+          - api.local
+    volumes: 
+      - ./site-manager-api:/var/www/html
+      - ./site-manager-api/.env.local:/var/www/html/.env
+      - ./docker-services/apache/api.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+    depends_on: 
+      - api-app
+      - api-redis
+      - mysql
+
+  api-app:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-api:/var/www/html:delegated
+      - ./site-manager-api/.env.local:/var/www/html/.env
+
+  api-redis:
+    image: redis:alpine
+    networks:
+      - app-network
+    ports:
+      - "6380:6379"
+
+  api-composer:
+    build:
+      context: .
+      dockerfile: docker-services/dockerfiles/composer.dockerfile
+    networks:
+      - app-network
+    volumes:
+      - ./site-manager-api:/var/www/html
+
+  api-artisan:
+    build: 
+      context: .
+      dockerfile: docker-services/dockerfiles/php.dockerfile
+    networks:
+      - app-network
+    volumes: 
+      - ./site-manager-api:/var/www/html
+      - ./site-manager-api/.env.local:/var/www/html/.env
+    entrypoint: ["php", "/var/www/html/artisan"]
+
+  # Shared Services
+  mysql:
+    platform: "linux/amd64"
+    image: mariadb:11.6
+    env_file:
+        - ./docker-services/env/mysql.env
+    ports:
+      - '3306:3306'
+    networks:
+      - app-network
+    volumes:
+      - dbdata:/var/lib/mysql
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+    dbdata:
