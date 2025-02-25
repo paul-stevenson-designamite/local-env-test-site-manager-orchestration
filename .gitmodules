@@ -1,12 +1,12 @@
 [submodule "site-manager-api"]
 	path = site-manager-api
 	url = git@github.com:paul-stevenson-designamite/local-env-test-site-manager-api.git
-	branch = production
+	branch = development
 [submodule "site-manager-new-ui"]
 	path = site-manager-new-ui
 	url = git@github.com:paul-stevenson-designamite/local-env-test-site-manager-new-ui.git
-	branch = production
+	branch = development
 [submodule "site-manager-legacy"]
 	path = site-manager-legacy
 	url = git@github.com:paul-stevenson-designamite/local-env-test-site-manager-legacy-ui.git
-	branch = production
+	branch = development
